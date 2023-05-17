@@ -18,7 +18,16 @@ class Task(models.Model):
         return f'<Object[task]:{self.type_number}.{self.pk}>'
 
     def get_photo_url(self):
-        return f'SolveGiaApp/media/tasks/images/{self.photos}'
+        return str(self.photos).replace('static/', '/static/')
 
-    def get_file_url(self):
-        return [f'SolveGiaApp/media/tasks/files/{file_name}' for file_name in list(str(self.files).split('+'))]
+    def get_first_file_url(self):
+        return [f'/static/tasks/files/{file_name}' for file_name in list(str(self.files).split('+'))][0]
+
+    def get_second_file_url(self):
+        if len([f'/static/tasks/files/{file_name}' for file_name in list(str(self.files).split('+'))]) == 2:
+            return [f'/static/tasks/files/{file_name}' for file_name in list(str(self.files).split('+'))][1]
+        else:
+            return ''
+
+    def append_two(self):
+        return int(self.type_number) + 2

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+    {% load static %}
+</head>
+
+
+<body>
+{% for task in tasks %}
+
+№ {% if task.type_number < 19 %}
+{{task.type_number}}
+
+{% elif task.type_number == 19 %}
+19-21
+
+{% else %}
+{{task.append_two}}
+
+{% endif %}
+{% autoescape off %}
+{{task.text}}
+<br>
+Answer:<br>
+{{task.answer}}
+{% endautoescape %}
+
+
+<br>
+{% endfor %}
+</body>
+</html>
