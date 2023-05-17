@@ -1,6 +1,8 @@
 from django.db import models
 from django.urls import reverse
+
 EMPTY_STRING = ''
+
 
 class Task(models.Model):
     type_number = models.IntegerField(blank=False)
@@ -12,7 +14,7 @@ class Task(models.Model):
     category = models.TextField(blank=False)
 
     def get_absolute_url(self):
-        return reverse('task', kwargs={'category': self.category.name, 'id': self.__pk})
+        return reverse('task', kwargs={'id': self.__pk})
 
     def __str__(self):
         return f'<Object[task]:{self.type_number}.{self.pk}>'
@@ -31,3 +33,11 @@ class Task(models.Model):
 
     def append_two(self):
         return int(self.type_number) + 2
+
+    def get_str_type_number(self):
+        if self.type_number < 19:
+            return str(self.type_number)
+        elif self.type_number > 19:
+            return str(self.type_number + 2)
+        else:
+            return '19-21'

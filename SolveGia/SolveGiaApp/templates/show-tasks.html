@@ -3,23 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>{{title}}</title>
-    {% load static %}
 </head>
-
-
 <body>
 {% for task in tasks %}
-
-<h1><a href="{% url 'task' task.pk %}">№{{task.get_str_type_number}}.{{task.pk}}</a></h1>
 {% autoescape off %}
-{{task.text}}
-<br>
+<h1><a href="{% url 'task' task.pk %}">№{{task.get_str_type_number}}.{{task.pk}}</a></h1>
+{{task.text}}<br>
 Answer:<br>
-{% if answers %} {{task.answer}} {% endif %}
+{{task.answer}}
 {% endautoescape %}
-
-
-<br>
 {% endfor %}
 </body>
 </html>
