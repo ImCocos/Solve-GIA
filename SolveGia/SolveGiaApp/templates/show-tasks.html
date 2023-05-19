@@ -9,7 +9,7 @@
 {% autoescape off %}
 <h1><a href="{% url 'task' task.pk %}">№{{task.get_str_type_number}}.{{task.pk}}</a></h1>
 {{task.text}}<br>
-Answer:<br>
+<h1>Answer:</h1>
 {{task.answer}}
 {% endautoescape %}
 {% endfor %}

@@ -41,3 +41,18 @@ class Task(models.Model):
             return str(self.type_number + 2)
         else:
             return '19-21'
+
+
+class Variant(models.Model):
+
+    variant = models.TextField()
+    category = models.TextField()
+
+    def __str__(self):
+        return self.variant
+
+    def get_absolute_url(self):
+        return reverse('variant', kwargs={'pk': self.pk})
+
+    def get_list_of_tasks_pk(self):
+        return list(str(self.variant).split('.'))

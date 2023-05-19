@@ -8,7 +8,7 @@
 <h1><a href="{% url 'task' task.pk %}">№{{task.get_str_type_number}}.{{task.pk}}</a><a href="{% url 'show-tasks' task.category task.type_number %}">(same tasks)</a></h1>
 {% autoescape off %}
 {{task.text}}<br>
-Answer:<br>
+<h1>Answer:</h1>
 {{task.answer}}
 {% endautoescape %}
 </body>

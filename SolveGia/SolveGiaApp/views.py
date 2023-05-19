@@ -6,6 +6,8 @@ from django.views.defaults import page_not_found
 
 from SolveGiaApp.models import *
 
+LIST_OF_CATEGORIES = ['Informatika']
+
 TASKS_EDGES: list[tuple[int, int]] = []
 for tn in range(1, 26):
     tpt = Task.objects.filter(type_number=tn)
@@ -19,8 +21,15 @@ def index(request):
 
 def generate_random_variant(request, category, answers=True):
     tasks: list[Task] = []
+    if category not in LIST_OF_CATEGORIES:
+        raise Http404
     for type_number in range(1, 26):
         tasks.append(Task.objects.get(type_number=type_number, pk=random.randint(*TASKS_EDGES[type_number - 1])))
+
+    str_list_of_pks = '.'.join([str(task.pk) for task in tasks])
+    var = Variant(variant=str_list_of_pks, category=category)
+    var.save()
+    print(str_list_of_pks)
 
     context = {
         'title': f'Variant of {category}',
@@ -61,3 +70,30 @@ def show_all_tasks_of_type(request, category, type_number):
     }
 
     return render(request=request, template_name='show-tasks.html', context=context)
+
+
+def show_variant(request, pk):
+    variant = get_object_or_404(Variant, pk=pk)
+    task_pks = variant.get_list_of_tasks_pk()
+
+    tasks = [Task.objects.get(pk=pk) for pk in task_pks]
+
+    context = {
+        'title': f'Variant of {variant.category}({variant.pk})',
+        'tasks': tasks,
+        'answers': True,
+    }
+
+    return render(request=request, template_name='show-variant.html', context=context)
+
+
+def show_all_variants_of_category(request, category):
+    variants = Variant.objects.filter(category=category)
+
+    context = {
+        'title': f'All variants of {category}',
+        'variants': variants,
+    }
+
+    return render(request=request, template_name='all-variants-of-category.html', context=context)
+
