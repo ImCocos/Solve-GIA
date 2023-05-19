@@ -131,7 +131,8 @@ def show_variant(request, pk):
 
 
     """
-    Функция get_list_of_tasks_pk вернет массив состоящий из pk который создаётся из строки(см. пример над функцией generate_random_variant)
+    Функция get_list_of_tasks_pk вернет массив состоящий из pk который создаётся из строки
+    (см. пример над функцией generate_random_variant)
     """
 
 
