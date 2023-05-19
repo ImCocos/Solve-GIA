@@ -1,8 +1,7 @@
-from django.http import HttpResponseNotFound, Http404
-from django.shortcuts import render, get_object_or_404, redirect
+from django.http import Http404
+from django.shortcuts import render, get_object_or_404
 import random
 
-from django.views.defaults import page_not_found
 
 from SolveGiaApp.models import *
 
@@ -96,4 +95,3 @@ def show_all_variants_of_category(request, category):
     }
 
     return render(request=request, template_name='all-variants-of-category.html', context=context)
-
