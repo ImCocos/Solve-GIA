@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+</head>
+<body>
+<form method="get">
+    {% for edge in edges %}
+    <input type="number" min="{{edge.0}}" max="{{edge.1}}" name="choice_{{edge.0}}" placeholder="Number">{{edge}}<br>
+    {% endfor %}
+    <button type="submit" name="SUBMIT" value="CREATE">Create variant</button>
+</form>
+</body>
+</html>
