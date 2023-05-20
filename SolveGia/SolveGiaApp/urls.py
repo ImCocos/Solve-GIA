@@ -8,4 +8,5 @@ urlpatterns = [
     path('tasks/<str:category>/<int:type_number>', show_all_tasks_of_type, name='show-tasks'),
     path('variant/<int:pk>', show_variant, name='variant'),
     path('variants/<str:category>', show_all_variants_of_category, name='all-variants'),
+    path('variant-constructor/<str:category>', create_variant, name='constructor'),
 ]

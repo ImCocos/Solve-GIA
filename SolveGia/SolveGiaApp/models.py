@@ -35,16 +35,25 @@ class Task(models.Model):
         return int(self.type_number) + 2
 
     def get_str_type_number(self):
-        if self.type_number < 19:
-            return str(self.type_number)
-        elif self.type_number > 19:
-            return str(self.type_number + 2)
-        else:
-            return '19-21'
+        if self.category == 'Informatika':
+            if self.type_number < 19:
+                return str(self.type_number)
+            elif self.type_number > 19:
+                return str(self.type_number + 2)
+            else:
+                return '19-21'
+
+    def get_int_type_number(self):
+        if self.category == 'Informatika':
+            if self.type_number < 19:
+                return self.type_number
+            elif 19 <= self.type_number <= 21:
+                return 19
+            elif self.type_number > 21:
+                return self.type_number
 
 
 class Variant(models.Model):
-
     variant = models.TextField()
     category = models.TextField()
 

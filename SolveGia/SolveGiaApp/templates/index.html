@@ -6,7 +6,19 @@
     {% load static %}
 </head>
 <body>
-<a href="{% url 'genvar' 'Informatika' %}">Generate random variant of Informatika</a><br>
-<a href="{% url 'all-variants' 'Informatika' %}">Show all variants of Informatika</a>
+
+<form>
+    Generate random variant of <input type="text" placeholder="Category" name="cat">
+    <button type="submit" name="SUBMIT" value="gen">Generate</button>
+</form>
+<form>
+    Show all variants of <input type="text" placeholder="Category" name="cat">
+    <button type="submit" name="SUBMIT" value="show">Show</button>
+</form>
+<form>
+    Variant constructor of <input type="text" placeholder="Category" name="cat">
+    <button type="submit" name="SUBMIT" value="const">Constructor</button>
+</form>
+
 </body>
 </html>
