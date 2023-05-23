@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+</head>
+<body>
+{% for variant in variants %}
+<a href="{% url 'variant' variant.pk %}">Variant {{variant.pk}}({{variant.category}})</a><br>
+{% endfor %}
+</body>
+</html>

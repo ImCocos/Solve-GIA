@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 
@@ -56,6 +57,7 @@ class Task(models.Model):
 class Variant(models.Model):
     variant = models.TextField()
     category = models.TextField()
+    owned = models.BooleanField(default=False)
 
     def __str__(self):
         return self.variant
@@ -65,3 +67,14 @@ class Variant(models.Model):
 
     def get_list_of_tasks_pk(self):
         return list(str(self.variant).split('.'))
+
+
+class Library(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    variants = models.ManyToManyField(Variant, blank=True)
+
+    def get_absolute_url(self):
+        return reverse('show-smns-vars', kwargs={'user_pk': self.pk})
+
+    def __str__(self):
+        return f'<Library-of-{self.owner.username}>'

@@ -1,3 +1,5 @@
+from django.contrib import messages
+from django.contrib.auth.models import User
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
 import random
@@ -50,6 +52,8 @@ def index(request):
                 return redirect('all-variants', cat)
             elif request.GET.get('SUBMIT') == 'const':
                 return redirect('constructor', cat)
+        if request.GET.get('SUBMIT') == 'show-smns-vars':
+            return redirect('show-smns-vars', request.GET.get('pk'))
     return render(request=request, template_name='index.html')
 
 
@@ -161,7 +165,7 @@ def show_variant(request, pk):
 
 def show_all_variants_of_category(request, category):
     check_category(category)
-    variants = Variant.objects.filter(category=category)
+    variants = Variant.objects.filter(category=category, owned=False)
 
     context = {
         'title': f'All variants of {category}',
@@ -196,6 +200,16 @@ def create_variant(request, category):
             name = 'choice_' + str(edge[1][0])
             if str(request.GET.get(name)) != '':
                 tasks.append(Task.objects.get(category=category, pk=int(request.GET.get(name))))
+        add_to_lib = request.GET.get('add-to-lib')
+        if add_to_lib == 'add':
+            if request.user.is_authenticated and len(tasks) != 0:
+                new_variant = Variant(category=category, variant='.'.join([str(task.pk) for task in tasks]),
+                                      owned=True)
+                new_variant.save()
+                add_variant_to_library(request.user, new_variant)
+            else:
+                print('You aren\'t authenticated or your variant doesn\'t contain any tasks')
+
         context = {
             'title': f'Variant constructor for {category}',
             'edges': edges,
@@ -205,3 +219,27 @@ def create_variant(request, category):
         return render(request=request, template_name='show-variant.html', context=context)
 
     return render(request=request, template_name='create-variant.html', context=context)
+
+
+def add_variant_to_library(user: User, variant):
+    if user not in list([library.owner for library in Library.objects.all()]):
+        owner = Library(owner=user)
+        owner.save()
+    else:
+        owner = Library.objects.get(owner=user)
+
+    owner.variants.add(variant)
+    owner.save()
+
+
+def show_library(request, user_pk):
+    user = get_object_or_404(User, pk=user_pk)
+    library = Library.objects.get(owner=user)
+
+    context = {
+        'title': f'All variants from {user.username}',
+        'variants': [var for var in library.variants.all()],
+        'answers': True,
+    }
+
+    return render(request, template_name='show-smns-vars.html', context=context)
