@@ -6,7 +6,7 @@
 </head>
 <body>
 {% for variant in variants %}
-<a href="{% url 'variant' variant.pk %}">Variant {{variant.pk}}({{variant.category}})</a><br>
+<a href="{% url 'variant' variant.pk %}">Variant {{variant.pk}}({{variant.category.name}})</a><br>
 {% endfor %}
 </body>
 </html>

@@ -2,21 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Index Page</title>
+    <title>{{title}}</title>
     {% load static %}
 </head>
 <body>
 
 <form>
-    Generate random variant of <input type="text" placeholder="Category" name="cat">
+    Generate random variant of
+    <select name="subject[]">
+        {% for cat in cats %}
+        <option name="cat" value="{{cat.name}}">{{cat.name}}</option>
+        {% endfor %}
+    </select>
     <button type="submit" name="SUBMIT" value="gen">Generate</button>
 </form>
 <form>
-    Show all variants of <input type="text" placeholder="Category" name="cat">
+    Show all variants of
+    <select name="subject[]">
+        {% for cat in cats %}
+        <option name="cat" value="{{cat.name}}">{{cat.name}}</option>
+        {% endfor %}
+    </select>
     <button type="submit" name="SUBMIT" value="show">Show</button>
 </form>
 <form>
-    Variant constructor of <input type="text" placeholder="Category" name="cat">
+    Variant constructor of
+    <select name="subject[]">
+        {% for cat in cats %}
+        <option name="cat" value="{{cat.name}}">{{cat.name}}</option>
+        {% endfor %}
+    </select>
     <button type="submit" name="SUBMIT" value="const">Constructor</button>
 </form>
 <form>

@@ -5,6 +5,27 @@ from django.urls import reverse
 EMPTY_STRING = ''
 
 
+class Category(models.Model):
+    name = models.TextField()
+    edges = models.TextField()  # example: 12.34+7675.78+823283.23
+
+    def get_edges(self):
+        string = self.edges.split('+')
+        string = string
+        for index, edges in enumerate(string):
+            string[index] = edges.split('.')
+            for i, edge in enumerate(string[index]):
+                string[index][i] = int(edge)
+
+        return string
+
+    def __str__(self):
+        return f'<Category-{self.name}>'
+
+    def get_absolute_url(self):
+        return reverse('all-variants', kwargs={'category': self.name})
+
+
 class Task(models.Model):
     type_number = models.IntegerField(blank=False)
     text = models.TextField(blank=False)
@@ -12,7 +33,7 @@ class Task(models.Model):
     photos = models.TextField(blank=True)
     files = models.TextField(blank=True)
     time_median = models.FloatField(blank=True, default=0)
-    category = models.TextField(blank=False)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=True, null=True)
 
     def get_absolute_url(self):
         return reverse('task', kwargs={'id': self.__pk})
@@ -36,7 +57,7 @@ class Task(models.Model):
         return int(self.type_number) + 2
 
     def get_str_type_number(self):
-        if self.category == 'Informatika':
+        if self.category.name == 'Informatika':
             if self.type_number < 19:
                 return str(self.type_number)
             elif self.type_number > 19:
@@ -45,7 +66,7 @@ class Task(models.Model):
                 return '19-21'
 
     def get_int_type_number(self):
-        if self.category == 'Informatika':
+        if self.category.name == 'Informatika':
             if self.type_number < 19:
                 return self.type_number
             elif 19 <= self.type_number <= 21:
@@ -56,7 +77,7 @@ class Task(models.Model):
 
 class Variant(models.Model):
     variant = models.TextField()
-    category = models.TextField()
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=True, null=True)
     owned = models.BooleanField(default=False)
 
     def __str__(self):

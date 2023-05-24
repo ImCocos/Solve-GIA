@@ -6,46 +6,19 @@ import random
 from SolveGiaApp.models import *
 
 """
-Массив с категориями заданий, который потом надо будет заменить на отдельную таблицу в БД
-"""
-
-LIST_OF_CATEGORIES = ['Informatika']
-
-"""
-Границы заданий по pk(на каждое задание по две границы(верхняя и нижняя))
-В будущем заменить на отдельную таблицу в бд
-"""
-
-
-def get_tasks_edges(category):
-    tasks_edges: list[tuple[int, int]] = []
-    last_number = Task.objects.filter(category=category).latest('type_number').type_number
-    for tn in range(1, last_number + 1):
-        tpt = Task.objects.filter(category=category, type_number=tn)
-        edges = int(tpt.first().pk), int(tpt.latest('pk').pk)
-        tasks_edges.append(edges)
-    return tasks_edges
-
-
-DIR_OF_EDGES = {}
-
-
-def create_edges():
-    for category in LIST_OF_CATEGORIES:
-        DIR_OF_EDGES[category] = get_tasks_edges(category)
-
-
-create_edges()
-
-"""
 Очевидно простая функция вывода индекс страницы, request обязательно принимать в каждой функции
 """
 
 
 def index(request):
+    all_cats = list(Category.objects.all())
+    context = {
+        'title': 'Main page',
+        'cats': all_cats,
+    }
     if request.method == 'GET' and request.GET.get('SUBMIT') is not None:
-        cat = request.GET.get('cat')
-        if cat in LIST_OF_CATEGORIES:
+        cat = request.GET.get('subject[]')
+        if cat in [ctg.name for ctg in Category.objects.all()]:
             if request.GET.get('SUBMIT') == 'gen':
                 return redirect('genvar', cat)
             elif request.GET.get('SUBMIT') == 'show':
@@ -54,7 +27,7 @@ def index(request):
                 return redirect('constructor', cat)
         if request.GET.get('SUBMIT') == 'show-smns-vars':
             return redirect('show-smns-vars', request.GET.get('pk'))
-    return render(request=request, template_name='index.html')
+    return render(request=request, template_name='index.html', context=context)
 
 
 """
@@ -65,12 +38,16 @@ def index(request):
 def generate_random_variant(request, category, answers=True):
     check_category(category)
     tasks: list[Task] = []
+    print(Category.objects.get(name=category).edges)
     for type_number in range(1, 26):
+        edges = Category.objects.get(name=category).get_edges()[type_number - 1]
         tasks.append(
-            Task.objects.get(type_number=type_number, pk=random.randint(*DIR_OF_EDGES[category][type_number - 1])))
+            Task.objects.get(type_number=type_number,
+                             pk=random.randint(edges[0], edges[1])))
 
     str_list_of_pks = '.'.join([str(task.pk) for task in tasks])
-    var = Variant(variant=str_list_of_pks, category=category)
+    ctg = Category.objects.get(name=category)
+    var = Variant(variant=str_list_of_pks, category=ctg)
     var.save()
     print(str_list_of_pks)
 
@@ -100,7 +77,7 @@ def show_task(request, pk):
     """
 
     context = {
-        'title': f'Task {task.get_str_type_number()}.{task.pk} of {task.category}',
+        'title': f'Task {task.get_str_type_number()}.{task.pk} of {task.category.name}',
         'task': task,
     }
 
@@ -114,7 +91,8 @@ def show_task(request, pk):
 
 def show_all_tasks_of_type(request, category, type_number):
     check_category(category)
-    latest_tn = Task.objects.filter(category=category).latest('type_number').type_number
+    ctg = Category.objects.get(name=category)
+    latest_tn = Task.objects.filter(category=ctg).latest('type_number').type_number
     if type_number < 1 or type_number > latest_tn:
         raise Http404
 
@@ -122,7 +100,7 @@ def show_all_tasks_of_type(request, category, type_number):
     Из-за того что Поляков соединил 3 задания в одно, приходится писать такие костыли
     """
 
-    tasks = Task.objects.filter(category=category, type_number=type_number)
+    tasks = Task.objects.filter(category=ctg, type_number=type_number)
 
     context = {
         'title': f'Tasks of {category}',
@@ -150,7 +128,7 @@ def show_variant(request, pk):
     tasks = [Task.objects.get(pk=pk) for pk in task_pks]
 
     context = {
-        'title': f'Variant of {variant.category}({variant.pk})',
+        'title': f'Variant({variant.pk}) of {variant.category.name}',
         'tasks': tasks,
         'answers': True,
     }
@@ -165,7 +143,8 @@ def show_variant(request, pk):
 
 def show_all_variants_of_category(request, category):
     check_category(category)
-    variants = Variant.objects.filter(category=category, owned=False)
+    ctg = Category.objects.get(name=category)
+    variants = Variant.objects.filter(category=ctg, owned=False)
 
     context = {
         'title': f'All variants of {category}',
@@ -176,13 +155,14 @@ def show_all_variants_of_category(request, category):
 
 
 def check_category(cat):
-    if cat not in LIST_OF_CATEGORIES:
+    if cat not in [ctg.name for ctg in Category.objects.all()]:
         raise Http404
 
 
 def create_variant(request, category):
     check_category(category)
-    edges = DIR_OF_EDGES[category]
+    edges = Category.objects.get(name=category).get_edges()
+    ctg = Category.objects.get(name=category)
 
     tasks: list[Task] = []
     for type_number in range(1, 26):
@@ -199,11 +179,11 @@ def create_variant(request, category):
         for edge in enumerate(edges):
             name = 'choice_' + str(edge[1][0])
             if str(request.GET.get(name)) != '':
-                tasks.append(Task.objects.get(category=category, pk=int(request.GET.get(name))))
+                tasks.append(Task.objects.get(category=ctg, pk=int(request.GET.get(name))))
         add_to_lib = request.GET.get('add-to-lib')
         if add_to_lib == 'add':
             if request.user.is_authenticated and len(tasks) != 0:
-                new_variant = Variant(category=category, variant='.'.join([str(task.pk) for task in tasks]),
+                new_variant = Variant(category=ctg, variant='.'.join([str(task.pk) for task in tasks]),
                                       owned=True)
                 new_variant.save()
                 add_variant_to_library(request.user, new_variant)
