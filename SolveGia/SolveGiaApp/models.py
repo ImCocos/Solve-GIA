@@ -32,8 +32,9 @@ class Task(models.Model):
     answer = models.TextField(blank=False)
     photos = models.TextField(blank=True)
     files = models.TextField(blank=True)
-    time_median = models.FloatField(blank=True, default=0)
+    rating = models.IntegerField(blank=True, default=0)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=True, null=True)
+    voices = models.ManyToManyField(User, blank=True)
 
     def get_absolute_url(self):
         return reverse('task', kwargs={'id': self.__pk})
@@ -99,3 +100,5 @@ class Library(models.Model):
 
     def __str__(self):
         return f'<Library-of-{self.owner.username}>'
+
+

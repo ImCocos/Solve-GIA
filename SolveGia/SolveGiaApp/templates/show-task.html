@@ -11,5 +11,23 @@
 <h1>Answer:</h1>
 {{task.answer}}
 {% endautoescape %}
+<br>
+<br>
+You can rate this task:
+<form method="get">
+    <select name="mark">
+        <option value="1">1 - bots</option>
+        <option value="2">2 - very easy</option>
+        <option value="3">3 - easy</option>
+        <option value="4">4 - not easy</option>
+        <option value="5">5 - medium</option>
+        <option value="6">6 - harder</option>
+        <option value="7">7 - hard</option>
+        <option value="8">8 - really hard</option>
+        <option value="9">9 - insane</option>
+        <option value="10">10 - god</option>
+    </select>
+    <button type="submit" name="RATE" value="RATE">Rate</button>
+</form>
 </body>
 </html>

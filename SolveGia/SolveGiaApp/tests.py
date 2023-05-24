@@ -41,3 +41,11 @@ from SolveGiaApp.models import *
 # for var in list(Variant.objects.all()):
 #     var.category = cat
 #     var.save()
+
+# task = KindaTask.objects.get(pk=1)
+#
+# cuser = KindaUser.objects.get(pk=499)
+# import time
+# print(f'START TIME SET')
+# start = time.time()
+# print(cuser in task.voices.all(), time.time()-start)

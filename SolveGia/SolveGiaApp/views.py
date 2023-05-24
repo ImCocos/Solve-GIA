@@ -38,7 +38,6 @@ def index(request):
 def generate_random_variant(request, category, answers=True):
     check_category(category)
     tasks: list[Task] = []
-    print(Category.objects.get(name=category).edges)
     for type_number in range(1, 26):
         edges = Category.objects.get(name=category).get_edges()[type_number - 1]
         tasks.append(
@@ -49,7 +48,6 @@ def generate_random_variant(request, category, answers=True):
     ctg = Category.objects.get(name=category)
     var = Variant(variant=str_list_of_pks, category=ctg)
     var.save()
-    print(str_list_of_pks)
 
     """
     Контекст очень полезная вещь, передаёт в html файл данные через переменные    
@@ -75,6 +73,10 @@ def show_task(request, pk):
     """
     При неверном pk функция get_object_or_404 вместо ошибки вернет страницу 404 
     """
+
+    if request.method == 'GET' and request.GET.get('RATE') is not None:
+        mark = int(request.GET.get('mark'))
+        print(rate(mark, task, request.user))
 
     context = {
         'title': f'Task {task.get_str_type_number()}.{task.pk} of {task.category.name}',
@@ -187,8 +189,6 @@ def create_variant(request, category):
                                       owned=True)
                 new_variant.save()
                 add_variant_to_library(request.user, new_variant)
-            else:
-                print('You aren\'t authenticated or your variant doesn\'t contain any tasks')
 
         context = {
             'title': f'Variant constructor for {category}',
@@ -223,3 +223,18 @@ def show_library(request, user_pk):
     }
 
     return render(request, template_name='show-smns-vars.html', context=context)
+
+
+def rate(mark: int, task: Task, user: User):
+    if not user.is_authenticated:
+        return False
+    if user in task.voices.all():
+        return False
+    if mark < 1 or mark > 10:
+        return False
+
+    task.voices.add(user)
+    task.rating = (task.rating + mark) // 2
+    task.save()
+
+    return True
