@@ -1,5 +1,3 @@
-from django.contrib import messages
-from django.contrib.auth.models import User
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
 import random
@@ -73,14 +71,15 @@ def show_task(request, pk):
     """
     При неверном pk функция get_object_or_404 вместо ошибки вернет страницу 404 
     """
-
+    error = ''
     if request.method == 'GET' and request.GET.get('RATE') is not None:
         mark = int(request.GET.get('mark'))
-        print(rate(mark, task, request.user))
+        error = '' if rate(mark, task, request.user) else 'You can\'t rate twice or you aren\'t authorized'
 
     context = {
-        'title': f'Task {task.get_str_type_number()}.{task.pk} of {task.category.name}',
+        'title': f'Task {task.get_str_type_number()}.{task.pk}({task.rating}) of {task.category.name}',
         'task': task,
+        'error': error,
     }
 
     return render(request=request, template_name='show-task.html', context=context)
@@ -130,7 +129,7 @@ def show_variant(request, pk):
     tasks = [Task.objects.get(pk=pk) for pk in task_pks]
 
     context = {
-        'title': f'Variant({variant.pk}) of {variant.category.name}',
+        'title': f'Variant {variant.pk} of {variant.category.name}',
         'tasks': tasks,
         'answers': True,
     }

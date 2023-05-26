@@ -5,7 +5,7 @@
     <title>{{title}}</title>
 </head>
 <body>
-<h1><a href="{% url 'task' task.pk %}">№{{task.get_str_type_number}}.{{task.pk}}</a><a href="{% url 'show-tasks' task.category task.get_int_type_number %}">(same tasks)</a></h1>
+<h1><a href="{% url 'task' task.pk %}">№{{task.get_str_type_number}}.{{task.pk}}({{task.rating}})</a><a href="{% url 'show-tasks' task.category.name task.get_int_type_number %}">(same tasks)</a></h1>
 {% autoescape off %}
 {{task.text}}<br>
 <h1>Answer:</h1>
@@ -29,5 +29,6 @@ You can rate this task:
     </select>
     <button type="submit" name="RATE" value="RATE">Rate</button>
 </form>
+{{error}}
 </body>
 </html>
