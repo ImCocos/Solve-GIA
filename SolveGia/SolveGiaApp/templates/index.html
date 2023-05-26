@@ -14,6 +14,19 @@
         <option name="cat" value="{{cat.name}}">{{cat.name}}</option>
         {% endfor %}
     </select>
+    difficulty:
+    <select name="difficulty[]">
+        <option value="1">1 - bots</option>
+        <option value="2">2 - very easy</option>
+        <option value="3">3 - easy</option>
+        <option value="4">4 - not easy</option>
+        <option value="5">5 - medium</option>
+        <option value="6">6 - harder</option>
+        <option value="7">7 - hard</option>
+        <option value="8">8 - really hard</option>
+        <option value="9">9 - insane</option>
+        <option value="10">10 - god</option>
+    </select>
     <button type="submit" name="SUBMIT" value="gen">Generate</button>
 </form>
 <form>
@@ -37,6 +50,14 @@
 <form>
     Library of <input type="number" name="pk" min="1" placeholder="user id">
     <button type="submit" name="SUBMIT" value="show-smns-vars">Show</button>
+</form>
+<form>
+    Show task <input type="number" name="pk" min="1" placeholder="task id">
+    <button type="submit" name="SUBMIT" value="task">Show</button>
+</form>
+<form>
+    Show variant <input type="number" name="pk" min="1" placeholder="variant id">
+    <button type="submit" name="SUBMIT" value="variant">Show</button>
 </form>
 
 </body>

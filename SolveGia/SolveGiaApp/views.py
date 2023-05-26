@@ -18,13 +18,17 @@ def index(request):
         cat = request.GET.get('subject[]')
         if cat in [ctg.name for ctg in Category.objects.all()]:
             if request.GET.get('SUBMIT') == 'gen':
-                return redirect('genvar', cat)
+                return generate_random_variant(request, cat, request.GET.get('difficulty[]'), True)
             elif request.GET.get('SUBMIT') == 'show':
                 return redirect('all-variants', cat)
             elif request.GET.get('SUBMIT') == 'const':
                 return redirect('constructor', cat)
         if request.GET.get('SUBMIT') == 'show-smns-vars':
             return redirect('show-smns-vars', request.GET.get('pk'))
+        elif request.GET.get('SUBMIT') == 'task':
+            return redirect('task', request.GET.get('pk'))
+        elif request.GET.get('SUBMIT') == 'variant':
+            return redirect('variant', request.GET.get('pk'))
     return render(request=request, template_name='index.html', context=context)
 
 
@@ -33,14 +37,16 @@ def index(request):
 """
 
 
-def generate_random_variant(request, category, answers=True):
+def generate_random_variant(request, category, difficulty: int = None, answers=True):
     check_category(category)
     tasks: list[Task] = []
-    for type_number in range(1, 26):
-        edges = Category.objects.get(name=category).get_edges()[type_number - 1]
-        tasks.append(
-            Task.objects.get(type_number=type_number,
-                             pk=random.randint(edges[0], edges[1])))
+    if difficulty is not None:
+        for type_number in range(1, 26):
+            tasks.append(Task.objects.get(pk=get_task_pk_closets_to_difficulty(type_number, difficulty)))
+    else:
+        for type_number in range(1, 26):
+            edges = Category.objects.get(name=category).get_edges()[type_number - 1]
+            tasks.append(Task.objects.get(pk=random.randint(edges[0], edges[1])))
 
     str_list_of_pks = '.'.join([str(task.pk) for task in tasks])
     ctg = Category.objects.get(name=category)
@@ -227,7 +233,7 @@ def show_library(request, user_pk):
 def rate(mark: int, task: Task, user: User):
     if not user.is_authenticated:
         return False
-    if user in task.voices.all():
+    if task.voices.filter(pk=user.pk).exists():
         return False
     if mark < 1 or mark > 10:
         return False
@@ -237,3 +243,14 @@ def rate(mark: int, task: Task, user: User):
     task.save()
 
     return True
+
+
+def get_task_pk_closets_to_difficulty(type_number, difficulty):
+    tasks_of_type_number_ordered = Task.objects.filter(type_number=type_number, rating__lte=difficulty).order_by(
+        '-rating').values_list('pk', 'rating')
+    max_rating = tasks_of_type_number_ordered[0][1]
+    tasks = []
+    for task in tasks_of_type_number_ordered:
+        if task[1] == max_rating:
+            tasks.append(task[0])
+    return random.choice(tasks)

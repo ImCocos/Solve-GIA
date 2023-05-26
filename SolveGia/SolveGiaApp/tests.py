@@ -1,8 +1,9 @@
 import os
-
+import random
 import django
 import requests
 from bs4 import BeautifulSoup
+from django.db.models import Max
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'SolveGia.settings')
 django.setup()
@@ -49,3 +50,15 @@ from SolveGiaApp.models import *
 # print(f'START TIME SET')
 # start = time.time()
 # print(cuser in task.voices.all(), time.time()-start)
+
+# def get_task_pks_closets_to_difficulty(type_number, difficulty):
+#     tasks_of_type_number_ordered = Task.objects.filter(type_number=type_number, rating__lte=difficulty).order_by('-rating').values_list('pk', 'rating')
+#     max_rating = tasks_of_type_number_ordered[0][1]
+#     tasks = []
+#     for task in tasks_of_type_number_ordered:
+#         if task[1] == max_rating:
+#             tasks.append(task[0])
+#     return random.choice(tasks)
+#
+#
+# print(get_task_pks_closets_to_difficulty(type_number=1, difficulty=0))
