@@ -8,6 +8,7 @@ EMPTY_STRING = ''
 class Category(models.Model):
     name = models.TextField()
     edges = models.TextField()  # example: 12.34+7675.78+823283.23
+    max_type_number = models.IntegerField()  # example 26
 
     def get_edges(self):
         string = self.edges.split('+')
@@ -100,5 +101,3 @@ class Library(models.Model):
 
     def __str__(self):
         return f'<Library-of-{self.owner.username}>'
-
-

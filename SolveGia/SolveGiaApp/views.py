@@ -1,3 +1,4 @@
+from django.db import connection, reset_queries
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
 import random
@@ -16,7 +17,7 @@ def index(request):
     }
     if request.method == 'GET' and request.GET.get('SUBMIT') is not None:
         cat = request.GET.get('subject[]')
-        if cat in [ctg.name for ctg in Category.objects.all()]:
+        if cat in [ctg.name for ctg in all_cats]:
             if request.GET.get('SUBMIT') == 'gen':
                 return generate_random_variant(request, cat, request.GET.get('difficulty[]'), True)
             elif request.GET.get('SUBMIT') == 'show':
@@ -29,6 +30,9 @@ def index(request):
             return redirect('task', request.GET.get('pk'))
         elif request.GET.get('SUBMIT') == 'variant':
             return redirect('variant', request.GET.get('pk'))
+    print(f'Sent queries: {len(connection.queries)}')
+    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    reset_queries()
     return render(request=request, template_name='index.html', context=context)
 
 
@@ -40,16 +44,16 @@ def index(request):
 def generate_random_variant(request, category, difficulty: int = None, answers=True):
     check_category(category)
     tasks: list[Task] = []
+    ctg: Category = Category.objects.get(name=category)
     if difficulty is not None:
-        for type_number in range(1, 26):
-            tasks.append(Task.objects.get(pk=get_task_pk_closets_to_difficulty(type_number, difficulty)))
+        for type_number in range(1, ctg.max_type_number + 1):
+            tasks.append(get_task_closets_to_difficulty(type_number, difficulty))
     else:
-        for type_number in range(1, 26):
+        for type_number in range(1, ctg.max_type_number + 1):
             edges = Category.objects.get(name=category).get_edges()[type_number - 1]
             tasks.append(Task.objects.get(pk=random.randint(edges[0], edges[1])))
 
     str_list_of_pks = '.'.join([str(task.pk) for task in tasks])
-    ctg = Category.objects.get(name=category)
     var = Variant(variant=str_list_of_pks, category=ctg)
     var.save()
 
@@ -62,7 +66,9 @@ def generate_random_variant(request, category, difficulty: int = None, answers=T
         'tasks': tasks,
         'answers': answers,
     }
-
+    print(f'Sent queries: {len(connection.queries)}')
+    [print(f'{index+1}:{query}\n') for index, query in enumerate(connection.queries)]
+    reset_queries()
     return render(request=request, template_name='show-variant.html', context=context)
 
 
@@ -88,6 +94,9 @@ def show_task(request, pk):
         'error': error,
     }
 
+    print(f'Sent queries: {len(connection.queries)}')
+    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    reset_queries()
     return render(request=request, template_name='show-task.html', context=context)
 
 
@@ -114,6 +123,9 @@ def show_all_tasks_of_type(request, category, type_number):
         'tasks': tasks,
     }
 
+    print(f'Sent queries: {len(connection.queries)}')
+    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    reset_queries()
     return render(request=request, template_name='show-tasks.html', context=context)
 
 
@@ -140,6 +152,9 @@ def show_variant(request, pk):
         'answers': True,
     }
 
+    print(f'Sent queries: {len(connection.queries)}')
+    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    reset_queries()
     return render(request=request, template_name='show-variant.html', context=context)
 
 
@@ -158,6 +173,9 @@ def show_all_variants_of_category(request, category):
         'variants': variants,
     }
 
+    print(f'Sent queries: {len(connection.queries)}')
+    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    reset_queries()
     return render(request=request, template_name='all-variants-of-category.html', context=context)
 
 
@@ -168,13 +186,8 @@ def check_category(cat):
 
 def create_variant(request, category):
     check_category(category)
-    edges = Category.objects.get(name=category).get_edges()
     ctg = Category.objects.get(name=category)
-
-    tasks: list[Task] = []
-    for type_number in range(1, 26):
-        tasks.append(
-            Task.objects.get(type_number=type_number, pk=random.randint(*edges[type_number - 1])))
+    edges = ctg.get_edges()
 
     context = {
         'title': f'Variant constructor for {category}',
@@ -201,8 +214,15 @@ def create_variant(request, category):
             'tasks': tasks,
             'answers': True,
         }
+
+        print(f'Sent queries: {len(connection.queries)}')
+        [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+        reset_queries()
         return render(request=request, template_name='show-variant.html', context=context)
 
+    print(f'Sent queries: {len(connection.queries)}')
+    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    reset_queries()
     return render(request=request, template_name='create-variant.html', context=context)
 
 
@@ -245,12 +265,12 @@ def rate(mark: int, task: Task, user: User):
     return True
 
 
-def get_task_pk_closets_to_difficulty(type_number, difficulty):
+def get_task_closets_to_difficulty(type_number, difficulty):
     tasks_of_type_number_ordered = Task.objects.filter(type_number=type_number, rating__lte=difficulty).order_by(
-        '-rating').values_list('pk', 'rating')
-    max_rating = tasks_of_type_number_ordered[0][1]
+        '-rating')
+    max_rating = tasks_of_type_number_ordered[0].rating
     tasks = []
     for task in tasks_of_type_number_ordered:
-        if task[1] == max_rating:
-            tasks.append(task[0])
+        if task.rating == max_rating:
+            tasks.append(task)
     return random.choice(tasks)
