@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+</head>
+<body>
+{% autoescape off %}
+<table style="border: 1px solid black;">
+    <thead>
+    <tr>Your results({{ratio}})</tr>
+    </thead>
+    <tr>
+        <td style="border: 1px solid black;">Numbers</td>
+        <td style="border: 1px solid black;">Right</td>
+        <td style="border: 1px solid black;">Yours</td>
+    </tr>
+    {% for answer_pack in answers %}
+    <tr>
+        <td style="border: 1px solid black;
+        {% if answer_pack.3 %}
+        background-color: #90EE90;
+        {% else %}
+        background-color: #D3212D;
+        {% endif %}">{{answer_pack.0}}</td>
+
+        <td style="border: 1px solid black;
+        {% if answer_pack.3 %}
+        background-color: #90EE90;
+        {% else %}
+        background-color: #D3212D;
+        {% endif %}">{{answer_pack.1}}</td>
+
+        <td style="border: 1px solid black;
+        {% if answer_pack.3 %}
+        background-color: #90EE90;
+        {% else %}
+        background-color: #D3212D;
+        {% endif %}">{{answer_pack.2}}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endautoescape %}
+</body>
+</html>

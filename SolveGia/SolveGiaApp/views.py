@@ -1,3 +1,6 @@
+import time
+
+from django.contrib.messages.storage import session
 from django.db import connection, reset_queries
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
@@ -67,7 +70,7 @@ def generate_random_variant(request, category, difficulty: int = None, answers=T
         'answers': answers,
     }
     print(f'Sent queries: {len(connection.queries)}')
-    [print(f'{index+1}:{query}\n') for index, query in enumerate(connection.queries)]
+    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
     reset_queries()
     return render(request=request, template_name='show-variant.html', context=context)
 
@@ -226,6 +229,41 @@ def create_variant(request, category):
     return render(request=request, template_name='create-variant.html', context=context)
 
 
+def solve_variant(request, pk):
+    variant = get_object_or_404(Variant, pk=pk)
+    ctg = variant.category
+    task_pks = variant.get_list_of_tasks_pk()
+
+    tasks = [Task.objects.get(pk=pk) for pk in task_pks]
+
+    context = {
+        'title': f'Variant {variant.pk} of {variant.category.name}',
+        'tasks': tasks,
+    }
+
+    if request.method == 'GET' and request.GET.get('check') is not None:
+        answers = []
+        for i in [task.type_number for task in tasks]:
+            answers.append(request.GET.get(f'answer{i}'))
+        right_answers = [task.answer for task in tasks]
+
+        context['title'] = 'Results'
+        context['answers'] = [
+            [tasks[i].get_str_type_number(), right_answers[i].replace('<br>', '').replace('<br/>', ''), answers[i],
+             valid_answer(answers[i], right_answers[i])] for i in
+            range(0, len(right_answers))]
+
+        context['ratio'] = f'{len([ans[3] for ans in context["answers"] if ans[3]])}/{len(right_answers)}'
+
+        return render(request, template_name='show-answers.html', context=context)
+
+    print(f'Sent queries: {len(connection.queries)}')
+    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    reset_queries()
+
+    return render(request=request, template_name='solve-variant.html', context=context)
+
+
 def add_variant_to_library(user: User, variant):
     if user not in list([library.owner for library in Library.objects.all()]):
         owner = Library(owner=user)
@@ -266,11 +304,25 @@ def rate(mark: int, task: Task, user: User):
 
 
 def get_task_closets_to_difficulty(type_number, difficulty):
-    tasks_of_type_number_ordered = Task.objects.filter(type_number=type_number, rating__lte=difficulty).order_by(
-        '-rating')
+    tasks_of_type_number_ordered: list[Task] = list(Task.objects.filter(type_number=type_number, rating__lte=difficulty).order_by(
+        '-rating'))
     max_rating = tasks_of_type_number_ordered[0].rating
     tasks = []
     for task in tasks_of_type_number_ordered:
         if task.rating == max_rating:
             tasks.append(task)
     return random.choice(tasks)
+
+
+def valid_answer(answer, right_answer):
+    answer, right_answer = str(answer), str(right_answer)
+    answer, right_answer = answer.lower(), right_answer.lower()
+
+    right_answer = right_answer.replace('<br>', '')
+    right_answer = right_answer.replace('<br/>', '')
+
+    if answer == right_answer:
+        return True
+    else:
+        print(f'{answer} is not {right_answer}')
+        return False

@@ -10,4 +10,5 @@ urlpatterns = [
     path('variants/<str:category>', show_all_variants_of_category, name='all-variants'),
     path('variant-constructor/<str:category>', create_variant, name='constructor'),
     path('library/<int:user_pk>', show_library, name='show-smns-vars'),
+    path('solve-variant/<int:pk>', solve_variant, name='solve-variant'),
 ]

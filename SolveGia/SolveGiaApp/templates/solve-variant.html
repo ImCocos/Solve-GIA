@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+</head>
+<body>
+<form method="get">
+    {% for task in tasks %}
+
+    <h1><a href="{% url 'task' task.pk %}">№{{task.get_str_type_number}}.{{task.pk}}({{task.rating}})</a></h1>
+    {% autoescape off %}
+    {{task.text}}
+    <br>
+    <h1>Your answer:</h1>
+
+    <input type="text" name="answer{{task.type_number}}" placeholder="answer">
+
+    {% endautoescape %}
+    <br>
+
+    {% endfor %}
+    <button type="submit" name="check" value="check">Send answers</button>
+</form>
+</body>
+</html>
