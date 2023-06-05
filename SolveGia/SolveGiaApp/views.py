@@ -67,7 +67,7 @@ def generate_random_variant(request, category, difficulty: int = None, answers=T
     var.save()
 
     """
-    Контекст очень полезная вещь, передаёт в html файл данные через переменные    
+    Контекст очень полезная вещь, передаёт в html файл данные через переменные
     """
 
     context = {
@@ -75,6 +75,7 @@ def generate_random_variant(request, category, difficulty: int = None, answers=T
         'tasks': tasks,
         'answers': answers,
     }
+
     print(f'Sent queries: {len(connection.queries)}')
     [print(f'{ind + 1}:{query}\n') for ind, query in enumerate(connection.queries)]
     reset_queries()
