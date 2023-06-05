@@ -11,12 +11,11 @@ from SolveGiaApp.models import *
 from django.conf import settings
 
 User = settings.AUTH_USER_MODEL
+RUSSIAN_ALPHABET = list('абвгдеёжзийклмнопрстуфхцчшщьыъэюя'.upper())
 
 """
 Очевидно простая функция вывода индекс страницы, request обязательно принимать в каждой функции
 """
-
-RUSSIAN_ALPHABET = list('абвгдеёжзийклмнопрстуфхцчшщьыъэюя'.upper())
 
 
 def index(request):
@@ -264,7 +263,6 @@ def solve_variant(request, pk):
 
         if list(user.home_work.all()) is not []:
             if variant.pk in user.home_work.all().values_list('variant_id', flat=True):
-                print(user.home_work.all().values_list('variant_id', flat=True))
                 hw: HomeWork = user.home_work.get(variant=variant)
                 hw.tries = hw.tries + 1
                 right = 0
@@ -489,7 +487,6 @@ def show_results_of_group(request, group_pk):
     homeworks: list[Variant] = list(group.group_hws.all())
     students: list[CustomUser] = [get_object_or_404(CustomUser, pk=user_pk) for user_pk in group.get_students_pk()]
     if len(homeworks) > 0 and len(students) > 0:
-        print('first if')
         results_table = []
         for hw in homeworks:
             mini_list = [hw, [[student, student.home_work.get(variant=hw)] for student in students]]
