@@ -1,15 +1,22 @@
-import time
-
-from django.contrib.messages.storage import session
 from django.db import connection, reset_queries
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
 import random
+
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
+
+from SolveGiaApp.forms import CustomUserCreationForm
 from SolveGiaApp.models import *
+from django.conf import settings
+
+User = settings.AUTH_USER_MODEL
 
 """
 Очевидно простая функция вывода индекс страницы, request обязательно принимать в каждой функции
 """
+
+RUSSIAN_ALPHABET = list('абвгдеёжзийклмнопрстуфхцчшщьыъэюя'.upper())
 
 
 def index(request):
@@ -34,7 +41,7 @@ def index(request):
         elif request.GET.get('SUBMIT') == 'variant':
             return redirect('variant', request.GET.get('pk'))
     print(f'Sent queries: {len(connection.queries)}')
-    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    [print(f'{ind + 1}:{query}\n') for ind, query in enumerate(connection.queries)]
     reset_queries()
     return render(request=request, template_name='index.html', context=context)
 
@@ -70,7 +77,7 @@ def generate_random_variant(request, category, difficulty: int = None, answers=T
         'answers': answers,
     }
     print(f'Sent queries: {len(connection.queries)}')
-    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    [print(f'{ind + 1}:{query}\n') for ind, query in enumerate(connection.queries)]
     reset_queries()
     return render(request=request, template_name='show-variant.html', context=context)
 
@@ -98,7 +105,7 @@ def show_task(request, pk):
     }
 
     print(f'Sent queries: {len(connection.queries)}')
-    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    [print(f'{ind + 1}:{query}\n') for ind, query in enumerate(connection.queries)]
     reset_queries()
     return render(request=request, template_name='show-task.html', context=context)
 
@@ -127,7 +134,7 @@ def show_all_tasks_of_type(request, category, type_number):
     }
 
     print(f'Sent queries: {len(connection.queries)}')
-    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    [print(f'{ind + 1}:{query}\n') for ind, query in enumerate(connection.queries)]
     reset_queries()
     return render(request=request, template_name='show-tasks.html', context=context)
 
@@ -156,7 +163,7 @@ def show_variant(request, pk):
     }
 
     print(f'Sent queries: {len(connection.queries)}')
-    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    [print(f'{ind + 1}:{query}\n') for ind, query in enumerate(connection.queries)]
     reset_queries()
     return render(request=request, template_name='show-variant.html', context=context)
 
@@ -169,7 +176,7 @@ def show_variant(request, pk):
 def show_all_variants_of_category(request, category):
     check_category(category)
     ctg = Category.objects.get(name=category)
-    variants = Variant.objects.filter(category=ctg, owned=False)
+    variants = Variant.objects.filter(category=ctg, owned_by=False)
 
     context = {
         'title': f'All variants of {category}',
@@ -177,7 +184,7 @@ def show_all_variants_of_category(request, category):
     }
 
     print(f'Sent queries: {len(connection.queries)}')
-    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    [print(f'{ind + 1}:{query}\n') for ind, query in enumerate(connection.queries)]
     reset_queries()
     return render(request=request, template_name='all-variants-of-category.html', context=context)
 
@@ -207,7 +214,7 @@ def create_variant(request, category):
         if add_to_lib == 'add':
             if request.user.is_authenticated and len(tasks) != 0:
                 new_variant = Variant(category=ctg, variant='.'.join([str(task.pk) for task in tasks]),
-                                      owned=True)
+                                      owned_by=True)
                 new_variant.save()
                 add_variant_to_library(request.user, new_variant)
 
@@ -219,20 +226,20 @@ def create_variant(request, category):
         }
 
         print(f'Sent queries: {len(connection.queries)}')
-        [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+        [print(f'{ind + 1}:{query}\n') for ind, query in enumerate(connection.queries)]
         reset_queries()
         return render(request=request, template_name='show-variant.html', context=context)
 
     print(f'Sent queries: {len(connection.queries)}')
-    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    [print(f'{ind + 1}:{query}\n') for ind, query in enumerate(connection.queries)]
     reset_queries()
     return render(request=request, template_name='create-variant.html', context=context)
 
 
 def solve_variant(request, pk):
     variant = get_object_or_404(Variant, pk=pk)
-    ctg = variant.category
     task_pks = variant.get_list_of_tasks_pk()
+    user = request.user
 
     tasks = [Task.objects.get(pk=pk) for pk in task_pks]
 
@@ -255,33 +262,38 @@ def solve_variant(request, pk):
 
         context['ratio'] = f'{len([ans[3] for ans in context["answers"] if ans[3]])}/{len(right_answers)}'
 
+        if list(user.home_work.all()) is not []:
+            if variant.pk in user.home_work.all().values_list('variant_id', flat=True):
+                print(user.home_work.all().values_list('variant_id', flat=True))
+                hw: HomeWork = user.home_work.get(variant=variant)
+                hw.tries = hw.tries + 1
+                right = 0
+                for i in context['answers']:
+                    if i[3]:
+                        right += 1
+                hw.result = (right / len(context['answers'])) * 100
+                hw.save()
+
         return render(request, template_name='show-answers.html', context=context)
 
     print(f'Sent queries: {len(connection.queries)}')
-    [print(f'{index + 1}:{query}\n') for index, query in enumerate(connection.queries)]
+    [print(f'{ind + 1}:{query}\n') for ind, query in enumerate(connection.queries)]
     reset_queries()
 
     return render(request=request, template_name='solve-variant.html', context=context)
 
 
-def add_variant_to_library(user: User, variant):
-    if user not in list([library.owner for library in Library.objects.all()]):
-        owner = Library(owner=user)
-        owner.save()
-    else:
-        owner = Library.objects.get(owner=user)
-
-    owner.variants.add(variant)
-    owner.save()
+def add_variant_to_library(user: CustomUser, variant):
+    user.variants.add(variant)
 
 
 def show_library(request, user_pk):
     user = get_object_or_404(User, pk=user_pk)
-    library = Library.objects.get(owner=user)
+    library = list(user.variants.all())
 
     context = {
         'title': f'All variants from {user.username}',
-        'variants': [var for var in library.variants.all()],
+        'variants': [var for var in library],
         'answers': True,
     }
 
@@ -304,8 +316,9 @@ def rate(mark: int, task: Task, user: User):
 
 
 def get_task_closets_to_difficulty(type_number, difficulty):
-    tasks_of_type_number_ordered: list[Task] = list(Task.objects.filter(type_number=type_number, rating__lte=difficulty).order_by(
-        '-rating'))
+    tasks_of_type_number_ordered: list[Task] = list(
+        Task.objects.filter(type_number=type_number, rating__lte=difficulty).order_by(
+            '-rating'))
     max_rating = tasks_of_type_number_ordered[0].rating
     tasks = []
     for task in tasks_of_type_number_ordered:
@@ -324,5 +337,165 @@ def valid_answer(answer, right_answer):
     if answer == right_answer:
         return True
     else:
-        print(f'{answer} is not {right_answer}')
         return False
+
+
+class SignUpView(CreateView):
+    form_class = CustomUserCreationForm
+    success_url = reverse_lazy('login')
+    template_name = 'registration/reg.html'
+
+
+def profile(request):
+    if not request.user.is_authenticated:
+        return Http404
+    else:
+        user: CustomUser = request.user
+
+    groups = GroupCU.objects.all()
+
+    context = {
+        'title': f'{user.username}',
+        'user': user,
+        'groups': groups,
+        'error': '',
+        'variants': [hw.variant for hw in user.home_work.all()] if user.home_work is not None else [],
+        'russian_alphabet': RUSSIAN_ALPHABET,
+        'classes': list(range(1, 12)),
+        'cats': list(Category.objects.all().values_list('name', flat=True)),
+        'vars_edges':
+            (Variant.objects.first().pk, Variant.objects.latest('pk').pk) if Variant.objects.first() is not None else (
+                0, 0),
+    }
+
+    if user.status >= 2:
+        lst = []
+        for group in user.groups.all():
+            lst.append([group, [get_object_or_404(CustomUser, pk=us_pk) for us_pk in group.get_students_pk()]])
+        context['groups_table'] = lst
+
+    if request.method == 'GET':
+        if request.GET.get('SUBMIT') == 'set-status':
+            status = request.GET.get('status[]')
+            if status != '' and status is not None:
+                status = int(status)
+                if status == 1:
+                    user.status = 1
+                    user.save()
+                elif status == 2 or status == 3:
+                    return redirect('confirm', status)
+                else:
+                    return Http404
+
+            return redirect('profile')
+
+        elif request.GET.get('SUBMIT') == 'create-group' and (user.status == 2 or user.status == 3):
+            group_number = request.GET.get('class[]')
+            group_let = request.GET.get('letter[]')
+            group_cat = request.GET.get('cat[]')
+
+            try:
+                group_number = int(group_number)
+            except TypeError:
+                return Http404
+
+            if group_number not in list(range(1, 12)):
+                return Http404
+
+            if group_let not in RUSSIAN_ALPHABET:
+                return Http404
+
+            if group_cat not in context['cats']:
+                return Http404
+
+            group_name = f'{group_number}-{group_let}-{group_cat}'
+
+            if group_name not in GroupCU.objects.values_list('name', flat=True):
+                new_group = GroupCU(name=group_name)
+                new_group.save()
+                user.groups.add(new_group)
+                user.save()
+            else:
+                context['error'] = 'This name is already taken'
+
+            return redirect('profile')
+
+        elif request.GET.get('SUBMIT') == 'set-hw' and (user.status == 2 or user.status == 3):
+            group_pk = int(request.GET.get('set-hw-for-group[]'))
+            variant_pk = int(request.GET.get('hw-variant-id'))
+
+            group: GroupCU = GroupCU.objects.get(pk=group_pk)
+            variant = get_object_or_404(Variant, pk=variant_pk)
+
+            for member_pk in group.get_students_pk():
+                user = CustomUser.objects.get(pk=member_pk)
+                new_hw = HomeWork(variant=variant)
+                new_hw.save()
+                user.home_work.add(new_hw)
+                user.save()
+
+            group.group_hws.add(variant)
+            group.save()
+
+            return redirect('profile')
+
+        elif request.GET.get('SUBMIT') == 'add-smn' and (user.status >= 2):
+            try:
+                group_pk = int(request.GET.get('add-smn-to-group[]'))
+            except TypeError:
+                return Http404
+
+            if group_pk not in list(user.groups.values_list('pk', flat=True)):
+                return Http404
+
+            try:
+                user_pk = int(request.GET.get('user-pk'))
+            except TypeError:
+                return Http404
+
+            group = GroupCU.objects.get(pk=group_pk)
+            cuser = get_object_or_404(CustomUser, pk=user_pk)
+
+            if cuser.pk not in group.get_students_pk():
+                group.students = group.students + f'{cuser.pk}.'
+                group.save()
+            else:
+                context['error'] = 'Student already in group'
+
+            return redirect('profile')
+    return render(request, template_name='registration/profile.html', context=context)
+
+
+def confirm_status(request):
+    if not request.user.is_authenticated:
+        return Http404
+
+    return render(request, template_name='registration/confirmation.html')
+
+
+def show_results_of_group(request, group_pk):
+    user = request.user
+    group: GroupCU = get_object_or_404(GroupCU, pk=group_pk)
+
+    if not user.is_authenticated:
+        return Http404
+
+    if not user.status >= 2:
+        return Http404
+    context = {
+        'title': f'Results of group {group.name}',
+    }
+
+    homeworks: list[Variant] = list(group.group_hws.all())
+    students: list[CustomUser] = [get_object_or_404(CustomUser, pk=user_pk) for user_pk in group.get_students_pk()]
+    if len(homeworks) > 0 and len(students) > 0:
+        print('first if')
+        results_table = []
+        for hw in homeworks:
+            mini_list = [hw, [[student, student.home_work.get(variant=hw)] for student in students]]
+
+            results_table.append(mini_list)
+
+        context['results_table'] = results_table
+
+    return render(request, template_name='show-group-results.html', context=context)

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+</head>
+<body>
+
+{% for res_pack in results_table %}
+<table style="border: 1px solid black;">
+    <thead>
+    <tr>Results of <a href="{% url 'variant' res_pack.0.pk %}">variant {{res_pack.0.pk}}</a></tr>
+    </thead>
+    <tr>
+        <td style="border: 1px solid black;">Name</td>
+        <td style="border: 1px solid black;">Result</td>
+        <td style="border: 1px solid black;">Tries</td>
+    </tr>
+    {% for result in res_pack.1 %}
+    <tr>
+        <td style="border: 1px solid black;">{{result.0.username}}</td>
+        <td style="border: 1px solid black;">{{result.1.result}}%</td>
+        <td style="border: 1px solid black;">{{result.1.tries}}</td>
+    </tr>
+    {% endfor %}
+</table>
+<br>
+{% endfor %}
+
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>{{user.username}}(
+{% if user.status == 0 %}
+anonim
+{% elif user.status == 1 %}
+student
+{% elif user.status == 2 %}
+teacher
+{% elif user.status == 3 %}
+admin
+{% else %}
+without status
+{% endif %})<br>
+<br>
+Who are you?<br>
+<form method="get">
+    <select name="status[]">
+        <option value="1">student</option>
+        <option value="2">teacher</option>
+        <option value="3">admin</option>
+    </select>
+    <button type="submit" name="SUBMIT" value="set-status">Send</button>
+</form>
+
+{% if user.status == 2 or user.status == 3%}
+Create your own group:
+<form method="get">
+    <select name="class[]">
+        {% for class in classes %}
+        <option value="{{class}}">{{class}}</option>
+        {% endfor %}
+    </select>
+    <select name="letter[]">
+        {% for letter in russian_alphabet %}
+        <option value="{{letter}}">{{letter}}</option>
+        {% endfor %}
+    </select>
+    <select name="cat[]">
+        {% for cat in cats %}
+        <option value="{{cat}}">{{cat}}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" name="SUBMIT" value="create-group">Create group</button>
+</form>
+{{error}}
+{% endif %}
+<br>
+{% if user.status == 1 or user.status == 3 %}
+Your home work:<br>
+{% for variant in variants %}
+<a href="{% url 'solve-variant' variant.pk %}">Variant {{variant.pk}}({{variant.category.name}})</a><br>
+{% endfor %}
+{% endif %}
+{% if user.status == 2 or user.status == 3 %}
+<br>
+Set homework for
+<form method="get">
+    <select name="set-hw-for-group[]">
+        {% for group in groups %}
+        <option value="{{group.pk}}">{{group.name}}</option>
+        {% endfor %}
+    </select>
+    <input type="number" placeholder="variant id" name="hw-variant-id" min="{{vars_edges.0}}" max="{{vars_edges.1}}">
+    <button type="submit" name="SUBMIT" value="set-hw">Set homework</button>
+</form>
+{% endif %}
+
+
+{% if user.status == 2 or user.status == 3 %}
+You can add someone to your group:<br>
+<form method="get">
+    <select name="add-smn-to-group[]">
+        {% for group in user.groups.all %}
+        <option value="{{group.pk}}">{{group.name}}</option>
+        {% endfor %}
+    </select>
+    <input type="number" name="user-pk" placeholder="User id">
+    <button type="submit" name="SUBMIT" value="add-smn">Add</button>
+</form>
+<br>
+Your groups:
+<br>
+
+{% for group_pack in groups_table %}
+<table style="border: 1px solid black;">
+    <thead>
+    <tr>
+        <td>
+            Users in group <a href="{% url 'results' group_pack.0.pk %}">{{group_pack.0.name}}</a>
+        </td>
+    </tr>
+    </thead>
+    {% for us in group_pack.1 %}
+    <tr>
+        <td style="border-top: 1px solid black;">
+            {{us.pk}} | {{us.username}}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<br>
+{% endfor %}
+
+
+{% endif %}
+</body>
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+</head>
+</html>

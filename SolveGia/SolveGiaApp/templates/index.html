@@ -6,7 +6,7 @@
     {% load static %}
 </head>
 <body>
-
+<h1>{{request.user.username}}</h1>
 <form>
     Generate random variant of
     <select name="subject[]">
@@ -59,6 +59,6 @@
     Show variant <input type="number" name="pk" min="1" placeholder="variant id">
     <button type="submit" name="SUBMIT" value="variant">Show</button>
 </form>
-
+<a href="{% url 'profile' %}">Profile</a> <a href="{% url 'reg' %}">Registration</a> <a href="{% url 'login' %}">Login</a>
 </body>
 </html>
